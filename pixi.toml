@@ -1,0 +1,70 @@
+[workspace]
+name = "yar"
+description = "y-crdt bindings to R lang"
+authors = ["AntoinePrv <AntoinePrv@users.noreply.github.com>"]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[environments]
+dev = { features = ["build", "test", "dev"], solve-group = "default" }
+
+[feature.build.dependencies]
+sccache = ">=0.8.1"
+c-compiler = ">=1.7.0,<2"
+rust = ">=1.85.0"
+# R library and headers needed at compile time
+r = "*"
+# R tools needed to generate NAMESPACE
+r-roxygen2 = "*"
+
+[feature.build.activation.env]
+RUSTC_WRAPPER = "sccache"
+RUSTFLAGS = "-C link-arg=-rpath -C link-arg=$CONDA_PREFIX/lib/"
+
+[feature.build.tasks.build-lib]
+description = "Compile Rust code into a library"
+cmd = "cargo build --manifest-path=rust/Cargo.toml --lib "
+cwd = "src"
+inputs = ["src/rust/src/**/*.rs", "src/rust/Cargo.*"]
+outputs = ["src/rust/target/**/*"]
+
+[feature.build.tasks.build-wrappers]
+description = "Generate R/extendr-wrappers.R from Rust #[extendr] macros"
+cmd = "cargo run --manifest-path=rust/Cargo.toml --bin document"
+cwd = "src"
+inputs = ["src/rust/src/**/*.rs", "src/rust/Cargo.toml"]
+outputs = ["R/extendr-wrappers.R"]
+
+[feature.build.tasks.build-namespace]
+cmd = """
+Rscript -e 'roxygen2::roxygenise(load = "source")'
+"""
+depends-on = ["build-wrappers"]
+description = "Generate R documentation and NAMESPACE from roxygen2 comments"
+inputs = ["R/*.R", "DESCRIPTION"]
+outputs = ["man/*.Rd", "NAMESPACE"]
+
+[feature.test.dependencies]
+pre-commit = ">=3.7.1"
+tombi = ">=0.9.2"
+
+[feature.test.tasks]
+# Formatters
+fmt-cargo = "cargo fmt --manifest-path=src/rust/Cargo.toml"
+fmt-tombi = "tombi format"
+fmt = { depends-on = ["fmt-tombi", "fmt-cargo"] }
+# Checkers
+check-cargo = "cargo check --manifest-path=src/rust/Cargo.toml --all-targets --workspace"
+check-clippy = { cmd = "cargo --locked clippy --manifest-path=src/rust/Cargo.toml --fix --allow-staged", env = { RUSTFLAGS = "-Dwarnings", CARGO_TARGET_DIR = "$PIXI_PROJECT_ROOT/target/clippy" } }
+check = { depends-on = ["check-cargo", "check-clippy"] }
+# Tests
+test-cargo = "cargo --locked test --workspace"
+test = { depends-on = ["test-cargo"] }
+# Pre-commit easy alias
+pre-commit = "pre-commit"
+pre-commit-all = "pre-commit run --all-files"
+# Alias for what is being run in ci (pre-commit runs checks and formatter)
+ci = { depends-on = ["pre-commit-all"] }
+
+[feature.dev.dependencies]
+rust-src = ">=1.79.0"
