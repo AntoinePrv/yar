@@ -21,12 +21,12 @@ struct Transaction {
 
 #[extendr]
 impl Transaction {
-    fn new(doc: ExternalPtr<Doc>, #[extendr(default = "FALSE")] readonly: bool) -> Self {
+    fn new(doc: ExternalPtr<Doc>, #[extendr(default = "FALSE")] mutable: bool) -> Self {
         // Safety: Doc live in R memory and is kept alive in the owner field of this struct
-        let transaction: DynTransaction<'static> = if readonly {
-            unsafe { DynTransaction::Read(std::mem::transmute(doc.doc.transact())) }
-        } else {
+        let transaction: DynTransaction<'static> = if mutable {
             unsafe { DynTransaction::Write(std::mem::transmute(doc.doc.transact_mut())) }
+        } else {
+            unsafe { DynTransaction::Read(std::mem::transmute(doc.doc.transact())) }
         };
         Transaction {
             owner: doc.into(),

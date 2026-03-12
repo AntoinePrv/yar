@@ -31,7 +31,7 @@ test_that("Text insert and retrieve get_string", {
   doc <- Doc$new()
   text <- doc$get_or_insert_text("article")
 
-  trans <- Transaction$new(doc)
+  trans <- Transaction$new(doc, mutable = TRUE)
   text$insert(trans, 0L, "hello")
   text$insert(trans, 5L, " world")
   trans$commit()
@@ -44,8 +44,8 @@ test_that("Multiple readonly transaction does not deadlock", {
   doc <- Doc$new()
   text <- doc$get_or_insert_text("article")
 
-  trans1 <- Transaction$new(doc, readonly = TRUE)
-  trans2 <- Transaction$new(doc, readonly = TRUE)
+  trans1 <- Transaction$new(doc)
+  trans2 <- Transaction$new(doc)
   trans1$drop()
   trans2$drop()
 })
@@ -53,7 +53,7 @@ test_that("Multiple readonly transaction does not deadlock", {
 test_that("Errors when using Transaction after drop", {
   doc <- Doc$new()
   text <- doc$get_or_insert_text("article")
-  trans <- Transaction$new(doc)
+  trans <- Transaction$new(doc, mutable = TRUE)
   trans$drop()
 
   expect_s3_class(trans$commit(), "extendr_error")
