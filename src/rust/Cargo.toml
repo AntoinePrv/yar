@@ -14,8 +14,9 @@ name = "document"
 path = "document.rs"
 
 [dependencies]
-extendr-api = { version = "0.8.1", default-features = false, features = [
-  "result_condition"
+# Long time since 0.8.1 release
+extendr-api = { git = "https://github.com/extendr/extendr", rev = "ca338c9", default-features = false, features = [
+  "result_condition",
 ] }
 yrs = "0.25.0"
 

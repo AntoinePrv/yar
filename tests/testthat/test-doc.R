@@ -27,7 +27,7 @@ test_that("Transaction$new returns a Transaction", {
   expect_true(inherits(trans, "Transaction"))
 })
 
-test_that("Text insert and get_string works", {
+test_that("Text insert and retrieve get_string", {
   doc <- Doc$new()
   text <- doc$get_or_insert_text("article")
 
@@ -40,7 +40,17 @@ test_that("Text insert and get_string works", {
   trans$drop()
 })
 
-test_that("get_string errors after Transaction drop", {
+test_that("Multiple readonly transaction does not deadlock", {
+  doc <- Doc$new()
+  text <- doc$get_or_insert_text("article")
+
+  trans1 <- Transaction$new(doc, readonly = TRUE)
+  trans2 <- Transaction$new(doc, readonly = TRUE)
+  trans1$drop()
+  trans2$drop()
+})
+
+test_that("Errors when using Transaction after drop", {
   doc <- Doc$new()
   text <- doc$get_or_insert_text("article")
   trans <- Transaction$new(doc)

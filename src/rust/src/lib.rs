@@ -1,11 +1,19 @@
 use extendr_api::prelude::*;
 use yrs::{GetString as YGetString, Text as YText, Transact as YTransact};
 
+// Perhaps we could have two different bindings of Transaction and TransactionMut
+// with the same API and use a macro to bind YTransact trait methods.
+#[allow(clippy::large_enum_variant)]
+enum DynTransaction<'doc> {
+    Read(yrs::Transaction<'doc>),
+    Write(yrs::TransactionMut<'doc>),
+}
+
 #[extendr]
 struct Transaction {
     // Transaction auto commits on Drop, and keeps a lock
     // We need to be able to explicitly drop the lock.
-    transaction: Option<yrs::TransactionMut<'static>>,
+    transaction: Option<DynTransaction<'static>>,
     // Keep Document alive while the transaction is alive
     #[allow(dead_code)]
     owner: Robj,
@@ -13,22 +21,27 @@ struct Transaction {
 
 #[extendr]
 impl Transaction {
-    fn new(doc: ExternalPtr<Doc>) -> Self {
+    fn new(doc: ExternalPtr<Doc>, #[extendr(default = "FALSE")] readonly: bool) -> Self {
         // Safety: Doc live in R memory and is kept alive in the owner field of this struct
-        let transaction: yrs::TransactionMut<'static> =
-            unsafe { std::mem::transmute(doc.doc.transact_mut()) };
+        let transaction: DynTransaction<'static> = if readonly {
+            unsafe { DynTransaction::Read(std::mem::transmute(doc.doc.transact())) }
+        } else {
+            unsafe { DynTransaction::Write(std::mem::transmute(doc.doc.transact_mut())) }
+        };
         Transaction {
             owner: doc.into(),
             transaction: Some(transaction),
         }
     }
 
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> Result<(), Error> {
+        use DynTransaction::{Read, Write};
         match &mut self.transaction {
-            Some(trans) => {
-                let _: () = trans.commit();
+            Some(Write(trans)) => {
+                trans.commit();
                 Ok(())
             }
+            Some(Read(_)) => Err(Error::Other("Transaction is readonly".into())),
             None => Err(Error::Other("Transaction was dropped".into())),
         }
     }
@@ -43,15 +56,23 @@ struct TextRef(yrs::TextRef);
 
 #[extendr]
 impl TextRef {
-    fn insert(&self, transaction: &mut Transaction, index: u32, chunk: &str) {
-        if let Some(trans) = &mut transaction.transaction {
-            self.0.insert(trans, index, chunk)
+    fn insert(&self, transaction: &mut Transaction, index: u32, chunk: &str) -> Result<(), Error> {
+        use DynTransaction::{Read, Write};
+        match &mut transaction.transaction {
+            Some(Write(trans)) => {
+                self.0.insert(trans, index, chunk);
+                Ok(())
+            }
+            Some(Read(_)) => Err(Error::Other("Transaction is readonly".into())),
+            None => Err(Error::Other("Transaction was dropped".into())),
         }
     }
 
-    fn get_string(&self, transaction: &Transaction) -> Result<String> {
+    fn get_string(&self, transaction: &Transaction) -> Result<String, Error> {
+        use DynTransaction::{Read, Write};
         match &transaction.transaction {
-            Some(trans) => Ok(self.0.get_string(trans)),
+            Some(Write(trans)) => Ok(self.0.get_string(trans)),
+            Some(Read(trans)) => Ok(self.0.get_string(trans)),
             None => Err(Error::Other("Transaction was dropped".into())),
         }
     }
