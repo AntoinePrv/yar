@@ -43,6 +43,18 @@ StateVector$encode_v2 <- function() .Call(wrap__StateVector__encode_v2, self)
 #' @export
 `[[.StateVector` <- `$.StateVector`
 
+TextRef <- new.env(parent = emptyenv())
+
+TextRef$insert <- function(transaction, index, chunk) .Call(wrap__TextRef__insert, self, transaction, index, chunk)
+
+TextRef$get_string <- function(transaction) .Call(wrap__TextRef__get_string, self, transaction)
+
+#' @export
+`$.TextRef` <- function (self, name) { func <- TextRef[[name]]; environment(func) <- environment(); func }
+
+#' @export
+`[[.TextRef` <- `$.TextRef`
+
 Transaction <- new.env(parent = emptyenv())
 
 Transaction$new <- function(doc, mutable = FALSE) .Call(wrap__Transaction__new, doc, mutable)
@@ -57,22 +69,34 @@ Transaction$encode_diff_v1 <- function(state_vector) .Call(wrap__Transaction__en
 
 Transaction$encode_diff_v2 <- function(state_vector) .Call(wrap__Transaction__encode_diff_v2, self, state_vector)
 
+Transaction$apply_update_v1 <- function(data) .Call(wrap__Transaction__apply_update_v1, self, data)
+
+Transaction$apply_update_v2 <- function(data) .Call(wrap__Transaction__apply_update_v2, self, data)
+
 #' @export
 `$.Transaction` <- function (self, name) { func <- Transaction[[name]]; environment(func) <- environment(); func }
 
 #' @export
 `[[.Transaction` <- `$.Transaction`
 
-TextRef <- new.env(parent = emptyenv())
+Update <- new.env(parent = emptyenv())
 
-TextRef$insert <- function(transaction, index, chunk) .Call(wrap__TextRef__insert, self, transaction, index, chunk)
+Update$decode_v1 <- function(data) .Call(wrap__Update__decode_v1, data)
 
-TextRef$get_string <- function(transaction) .Call(wrap__TextRef__get_string, self, transaction)
+Update$decode_v2 <- function(data) .Call(wrap__Update__decode_v2, data)
+
+Update$new <- function() .Call(wrap__Update__new)
+
+Update$is_empty <- function() .Call(wrap__Update__is_empty, self)
+
+Update$encode_v1 <- function() .Call(wrap__Update__encode_v1, self)
+
+Update$encode_v2 <- function() .Call(wrap__Update__encode_v2, self)
 
 #' @export
-`$.TextRef` <- function (self, name) { func <- TextRef[[name]]; environment(func) <- environment(); func }
+`$.Update` <- function (self, name) { func <- Update[[name]]; environment(func) <- environment(); func }
 
 #' @export
-`[[.TextRef` <- `$.TextRef`
+`[[.Update` <- `$.Update`
 
 # nolint end

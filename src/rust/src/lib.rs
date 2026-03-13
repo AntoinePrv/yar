@@ -85,6 +85,56 @@ impl Transaction {
             Read(trans) => Ok(trans.encode_diff_v2(&state_vector.0)),
         }
     }
+
+    fn apply_update_v1(&mut self, data: &[u8]) -> Result<(), Error> {
+        let trans = self.try_transaction_mut()?;
+        // FIXME need to properly handle errors coming from yrs
+        let update = yrs::Update::decode_v1(data).unwrap();
+        trans.apply_update(update).unwrap();
+        Ok(())
+    }
+
+    fn apply_update_v2(&mut self, data: &[u8]) -> Result<(), Error> {
+        let trans = self.try_transaction_mut()?;
+        // FIXME need to properly handle errors coming from yrs
+        let update = yrs::Update::decode_v2(data).unwrap();
+        trans.apply_update(update).unwrap();
+        Ok(())
+    }
+}
+
+#[extendr]
+struct Update(yrs::Update);
+
+#[extendr]
+impl Update {
+    fn decode_v1(data: &[u8]) -> Result<Self, Error> {
+        // FIXME need to properly handle errors coming from yrs
+        let update = yrs::Update::decode_v1(data).unwrap();
+        Ok(Self(update))
+    }
+
+    fn decode_v2(data: &[u8]) -> Result<Self, Error> {
+        // FIXME need to properly handle errors coming from yrs
+        let update = yrs::Update::decode_v2(data).unwrap();
+        Ok(Self(update))
+    }
+
+    fn new() -> Self {
+        Self(yrs::Update::new())
+    }
+
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    fn encode_v1(&self) -> Vec<u8> {
+        self.0.encode_v1()
+    }
+
+    fn encode_v2(&self) -> Vec<u8> {
+        self.0.encode_v2()
+    }
 }
 
 #[extendr]
@@ -177,6 +227,7 @@ extendr_module! {
     mod yar;
     impl Doc;
     impl StateVector;
-    impl Transaction;
     impl TextRef;
+    impl Transaction;
+    impl Update;
 }

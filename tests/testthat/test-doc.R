@@ -68,6 +68,24 @@ test_that("Transaction state_vector of empty doc is empty", {
   trans$drop()
 })
 
+test_that("Update$new creates an empty Update", {
+  update <- Update$new()
+  expect_true(inherits(update, "Update"))
+  expect_true(update$is_empty())
+})
+
+for (version in c("v1", "v2")) {
+  local({
+    test_that(paste("Update encode/decode roundtrip", version), {
+      update <- Update$new()
+      encoded <- update[[paste0("encode_", version)]]()
+      expect_true(is.raw(encoded))
+      decoded <- Update[[paste0("decode_", version)]](encoded)
+      expect_true(decoded$is_empty())
+    })
+  }, list(version = version))
+}
+
 for (version in c("v1", "v2")) {
   local({
     test_that(paste("Transaction encode_diff", version, "against current state vector returns empty update"), {
@@ -82,6 +100,50 @@ for (version in c("v1", "v2")) {
       diff <- trans[[paste0("encode_diff_", version)]](sv)
       expect_true(is.raw(diff))
       trans$drop()
+    })
+  }, list(version = version))
+}
+
+#####################
+# Integration tests #
+#####################
+
+# This is the quick start example from yrs, https://docs.rs/yrs/latest/yrs/
+for (version in c("v1", "v2")) {
+  local({
+    test_that(paste("Synchronize two docs", version), {
+      doc <- Doc$new()
+      text <- doc$get_or_insert_text("article")
+
+      trans <- Transaction$new(doc, mutable = TRUE)
+      text$insert(trans, 0L, "hello")
+      text$insert(trans, 5L, " world")
+      trans$commit()
+
+      expect_equal(text$get_string(trans), "hello world")
+      trans$drop()
+
+      # Synchronize state with remote replica
+      remote_doc <- Doc$new()
+      remote_text <- remote_doc$get_or_insert_text("article")
+
+      remote_trans <- Transaction$new(remote_doc)
+      remote_sv_raw <- remote_trans$state_vector()[[paste0("encode_", version)]]()
+      remote_trans$drop()
+
+      # Get update with contents not observed by remote_doc
+      local_trans <- Transaction$new(doc)
+      remote_sv <- StateVector[[paste0("decode_", version)]](remote_sv_raw)
+      update <- local_trans[[paste0("encode_diff_", version)]](remote_sv)
+      local_trans$drop()
+
+      # Apply update on remote doc
+      remote_trans_mut <- Transaction$new(remote_doc, mutable = TRUE)
+      remote_trans_mut[[paste0("apply_update_", version)]](update)
+      remote_trans_mut$commit()
+
+      expect_equal(remote_text$get_string(remote_trans_mut), "hello world")
+      remote_trans_mut$drop()
     })
   }, list(version = version))
 }
