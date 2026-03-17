@@ -112,6 +112,12 @@ impl Transaction {
 #[extendr]
 struct Update(yrs::Update);
 
+impl From<yrs::Update> for Update {
+    fn from(value: yrs::Update) -> Self {
+        Self(value)
+    }
+}
+
 #[extendr]
 impl Update {
     fn decode_v1(data: &[u8]) -> Result<Self, Error> {
@@ -130,6 +136,10 @@ impl Update {
         self.0.is_empty()
     }
 
+    fn extends(&self, state_vector: &StateVector) -> bool {
+        self.0.extends(state_vector)
+    }
+
     fn encode_v1(&self) -> Vec<u8> {
         self.0.encode_v1()
     }
@@ -137,16 +147,63 @@ impl Update {
     fn encode_v2(&self) -> Vec<u8> {
         self.0.encode_v2()
     }
+
+    fn state_vector(&self) -> StateVector {
+        self.0.state_vector().into()
+    }
+
+    fn state_vector_lower(&self) -> StateVector {
+        self.0.state_vector_lower().into()
+    }
 }
 
 #[extendr]
 struct TextRef(yrs::TextRef);
 
+impl From<yrs::TextRef> for TextRef {
+    fn from(value: yrs::TextRef) -> Self {
+        Self(value)
+    }
+}
+
+impl std::ops::Deref for TextRef {
+    type Target = yrs::TextRef;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[extendr]
 impl TextRef {
+    fn len(&self, transaction: &Transaction) -> Result<u32, Error> {
+        use DynTransaction::{Read, Write};
+        match &transaction.try_dyn_transaction()? {
+            Write(trans) => Ok(self.0.len(trans)),
+            Read(trans) => Ok(self.0.len(trans)),
+        }
+    }
+
     fn insert(&self, transaction: &mut Transaction, index: u32, chunk: &str) -> Result<(), Error> {
         let trans = transaction.try_transaction_mut()?;
         self.0.insert(trans, index, chunk);
+        Ok(())
+    }
+
+    fn push(&self, transaction: &mut Transaction, chunk: &str) -> Result<(), Error> {
+        let trans = transaction.try_transaction_mut()?;
+        self.0.push(trans, chunk);
+        Ok(())
+    }
+
+    fn remove_range(
+        &self,
+        transaction: &mut Transaction,
+        index: u32,
+        len: u32,
+    ) -> Result<(), Error> {
+        let trans = transaction.try_transaction_mut()?;
+        self.0.remove_range(trans, index, len);
         Ok(())
     }
 
@@ -187,6 +244,20 @@ impl Doc {
 
 #[extendr]
 struct StateVector(yrs::StateVector);
+
+impl From<yrs::StateVector> for StateVector {
+    fn from(value: yrs::StateVector) -> Self {
+        Self(value)
+    }
+}
+
+impl std::ops::Deref for StateVector {
+    type Target = yrs::StateVector;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[extendr]
 impl StateVector {

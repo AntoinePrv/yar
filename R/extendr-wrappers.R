@@ -45,7 +45,13 @@ StateVector$encode_v2 <- function() .Call(wrap__StateVector__encode_v2, self)
 
 TextRef <- new.env(parent = emptyenv())
 
+TextRef$len <- function(transaction) .Call(wrap__TextRef__len, self, transaction)
+
 TextRef$insert <- function(transaction, index, chunk) .Call(wrap__TextRef__insert, self, transaction, index, chunk)
+
+TextRef$push <- function(transaction, chunk) .Call(wrap__TextRef__push, self, transaction, chunk)
+
+TextRef$remove_range <- function(transaction, index, len) .Call(wrap__TextRef__remove_range, self, transaction, index, len)
 
 TextRef$get_string <- function(transaction) .Call(wrap__TextRef__get_string, self, transaction)
 
@@ -89,9 +95,15 @@ Update$new <- function() .Call(wrap__Update__new)
 
 Update$is_empty <- function() .Call(wrap__Update__is_empty, self)
 
+Update$extends <- function(state_vector) .Call(wrap__Update__extends, self, state_vector)
+
 Update$encode_v1 <- function() .Call(wrap__Update__encode_v1, self)
 
 Update$encode_v2 <- function() .Call(wrap__Update__encode_v2, self)
+
+Update$state_vector <- function() .Call(wrap__Update__state_vector, self)
+
+Update$state_vector_lower <- function() .Call(wrap__Update__state_vector_lower, self)
 
 #' @export
 `$.Update` <- function (self, name) { func <- Update[[name]]; environment(func) <- environment(); func }

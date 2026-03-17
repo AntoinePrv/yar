@@ -37,6 +37,31 @@ test_that("Text insert and retrieve get_string", {
   trans$commit()
 
   expect_equal(text$get_string(trans), "hello world")
+  expect_equal(text$len(trans), 11L)
+  trans$drop()
+})
+
+test_that("Text push appends to the end", {
+  doc <- Doc$new()
+  text <- doc$get_or_insert_text("article")
+
+  trans <- Transaction$new(doc, mutable = TRUE)
+  text$push(trans, "hello")
+  text$push(trans, " world")
+
+  expect_equal(text$get_string(trans), "hello world")
+  trans$drop()
+})
+
+test_that("Text remove_range removes characters", {
+  doc <- Doc$new()
+  text <- doc$get_or_insert_text("article")
+
+  trans <- Transaction$new(doc, mutable = TRUE)
+  text$push(trans, "hello world")
+  text$remove_range(trans, 5L, 6L)
+
+  expect_equal(text$get_string(trans), "hello")
   trans$drop()
 })
 
