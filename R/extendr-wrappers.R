@@ -9,6 +9,14 @@ ArrayRef <- new.env(parent = emptyenv())
 
 ArrayRef$len <- function(transaction) .Call(wrap__ArrayRef__len, self, transaction)
 
+ArrayRef$insert_any <- function(transaction, index, obj) .Call(wrap__ArrayRef__insert_any, self, transaction, index, obj)
+
+ArrayRef$insert_text <- function(transaction, index) .Call(wrap__ArrayRef__insert_text, self, transaction, index)
+
+ArrayRef$insert_array <- function(transaction, index) .Call(wrap__ArrayRef__insert_array, self, transaction, index)
+
+ArrayRef$insert_map <- function(transaction, index) .Call(wrap__ArrayRef__insert_map, self, transaction, index)
+
 #' @export
 `$.ArrayRef` <- function (self, name) { func <- ArrayRef[[name]]; environment(func) <- environment(); func }
 
@@ -39,7 +47,13 @@ MapRef$len <- function(transaction) .Call(wrap__MapRef__len, self, transaction)
 
 MapRef$contains_key <- function(transaction, key) .Call(wrap__MapRef__contains_key, self, transaction, key)
 
-MapRef$insert <- function(transaction, key, value) .Call(wrap__MapRef__insert, self, transaction, key, value)
+MapRef$insert_any <- function(transaction, key, obj) .Call(wrap__MapRef__insert_any, self, transaction, key, obj)
+
+MapRef$insert_text <- function(transaction, key) .Call(wrap__MapRef__insert_text, self, transaction, key)
+
+MapRef$insert_array <- function(transaction, key) .Call(wrap__MapRef__insert_array, self, transaction, key)
+
+MapRef$insert_map <- function(transaction, key) .Call(wrap__MapRef__insert_map, self, transaction, key)
 
 MapRef$remove <- function(transaction, key) .Call(wrap__MapRef__remove, self, transaction, key)
 

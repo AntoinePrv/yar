@@ -20,6 +20,9 @@ extendr-api = { git = "https://github.com/extendr/extendr", rev = "ca338c9", def
 ] }
 yrs = "0.25.0"
 
+[dev-dependencies]
+extendr-engine = { git = "https://github.com/extendr/extendr", rev = "ca338c9" }
+
 [profile.release]
 lto = true
 codegen-units = 1

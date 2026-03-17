@@ -1,9 +1,13 @@
+mod type_conversion;
+
 use extendr_api::prelude::*;
 use yrs::updates::{decoder::Decode as YDecode, encoder::Encode as YEncode};
 use yrs::{
-    Array as YArray, GetString as YGetString, Map as YMap, ReadTxn as YReadTxn, Text as YText,
-    Transact as YTransact,
+    Array as YArray, ArrayPrelim, GetString as YGetString, Map as YMap, MapPrelim,
+    ReadTxn as YReadTxn, Text as YText, TextPrelim, Transact as YTransact,
 };
+
+use crate::type_conversion::{FromExtendr, IntoExtendr};
 
 macro_rules! try_read {
     ($txn:expr, $t:ident => $body:expr) => {
@@ -12,16 +16,6 @@ macro_rules! try_read {
             DynTransaction::Read($t) => $body,
         })
     };
-}
-
-trait IntoExtendr<T> {
-    fn extendr(self) -> extendr_api::Result<T>;
-}
-
-impl<T, E: ToString> IntoExtendr<T> for Result<T, E> {
-    fn extendr(self) -> extendr_api::Result<T> {
-        self.map_err(|e| Error::Other(e.to_string()))
-    }
 }
 
 // Perhaps we could have two different bindings of Transaction and TransactionMut
@@ -305,6 +299,36 @@ impl ArrayRef {
     fn len(&self, transaction: &Transaction) -> Result<u32, Error> {
         try_read!(transaction, t => self.0.len(t))
     }
+
+    fn insert_any(
+        &self,
+        transaction: &mut Transaction,
+        index: u32,
+        obj: Robj,
+    ) -> Result<(), Error> {
+        let trans = transaction.try_mut()?;
+        let any = yrs::Any::from_extendr(obj)?;
+        self.0.insert(trans, index, any);
+        Ok(())
+    }
+
+    fn insert_text(&self, transaction: &mut Transaction, index: u32) -> Result<TextRef, Error> {
+        transaction
+            .try_mut()
+            .map(|trans| TextRef::from(self.0.insert(trans, index, TextPrelim::default())))
+    }
+
+    fn insert_array(&self, transaction: &mut Transaction, index: u32) -> Result<ArrayRef, Error> {
+        transaction
+            .try_mut()
+            .map(|trans| ArrayRef::from(self.0.insert(trans, index, ArrayPrelim::default())))
+    }
+
+    fn insert_map(&self, transaction: &mut Transaction, index: u32) -> Result<MapRef, Error> {
+        transaction
+            .try_mut()
+            .map(|trans| MapRef::from(self.0.insert(trans, index, MapPrelim::default())))
+    }
 }
 
 #[extendr]
@@ -334,10 +358,29 @@ impl MapRef {
         try_read!(transaction, t => self.0.contains_key(t, key))
     }
 
-    fn insert(&self, transaction: &mut Transaction, key: &str, value: &str) -> Result<(), Error> {
-        transaction.try_mut().map(|trans| {
-            self.0.insert(trans, key, value);
-        })
+    fn insert_any(&self, transaction: &mut Transaction, key: &str, obj: Robj) -> Result<(), Error> {
+        let trans = transaction.try_mut()?;
+        let any = yrs::Any::from_extendr(obj)?;
+        self.0.insert(trans, key, any);
+        Ok(())
+    }
+
+    fn insert_text(&self, transaction: &mut Transaction, key: &str) -> Result<TextRef, Error> {
+        transaction
+            .try_mut()
+            .map(|trans| TextRef::from(self.0.insert(trans, key, TextPrelim::default())))
+    }
+
+    fn insert_array(&self, transaction: &mut Transaction, key: &str) -> Result<ArrayRef, Error> {
+        transaction
+            .try_mut()
+            .map(|trans| ArrayRef::from(self.0.insert(trans, key, ArrayPrelim::default())))
+    }
+
+    fn insert_map(&self, transaction: &mut Transaction, key: &str) -> Result<MapRef, Error> {
+        transaction
+            .try_mut()
+            .map(|trans| MapRef::from(self.0.insert(trans, key, MapPrelim::default())))
     }
 
     fn remove(&self, transaction: &mut Transaction, key: &str) -> Result<(), Error> {

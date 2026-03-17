@@ -156,12 +156,12 @@ for (version in c("v1", "v2")) {
   }, list(version = version))
 }
 
-test_that("Map insert and contains_key", {
+test_that("Map insert_text and contains_key", {
   doc <- Doc$new()
   map <- doc$get_or_insert_map("data")
 
   trans <- Transaction$new(doc, mutable = TRUE)
-  map$insert(trans, "key", "value")
+  map$insert_text(trans, "key")
 
   expect_equal(map$len(trans), 1L)
   expect_true(map$contains_key(trans, "key"))
@@ -174,8 +174,8 @@ test_that("Map remove decreases len", {
   map <- doc$get_or_insert_map("data")
 
   trans <- Transaction$new(doc, mutable = TRUE)
-  map$insert(trans, "a", "1")
-  map$insert(trans, "b", "2")
+  map$insert_text(trans, "a")
+  map$insert_text(trans, "b")
   map$remove(trans, "a")
 
   expect_equal(map$len(trans), 1L)
@@ -188,11 +188,67 @@ test_that("Map clear removes all entries", {
   map <- doc$get_or_insert_map("data")
 
   trans <- Transaction$new(doc, mutable = TRUE)
-  map$insert(trans, "a", "1")
-  map$insert(trans, "b", "2")
+  map$insert_text(trans, "a")
+  map$insert_text(trans, "b")
   map$clear(trans)
 
   expect_equal(map$len(trans), 0L)
+  trans$drop()
+})
+
+test_that("Map insert methods return usable nested types", {
+  doc <- Doc$new()
+  map <- doc$get_or_insert_map("data")
+  trans <- Transaction$new(doc, mutable = TRUE)
+
+  map$insert_any(trans, "scalar", "hello")
+
+  text <- map$insert_text(trans, "content")
+  expect_true(inherits(text, "TextRef"))
+  text$push(trans, "hello")
+  text$push(trans, " world")
+  expect_equal(text$get_string(trans), "hello world")
+
+  arr <- map$insert_array(trans, "list")
+  expect_true(inherits(arr, "ArrayRef"))
+  arr$insert_any(trans, 0L, TRUE)
+  expect_equal(arr$len(trans), 1L)
+
+  nested <- map$insert_map(trans, "nested")
+  expect_true(inherits(nested, "MapRef"))
+  nested$insert_any(trans, "k", 42L)
+  expect_equal(nested$len(trans), 1L)
+
+  expect_equal(map$len(trans), 4L)
+  trans$drop()
+})
+
+test_that("ArrayRef insert methods return usable nested types", {
+  doc <- Doc$new()
+  map <- doc$get_or_insert_map("data")
+  trans <- Transaction$new(doc, mutable = TRUE)
+  arr <- map$insert_array(trans, "root")
+  expect_true(inherits(arr, "ArrayRef"))
+
+  arr$insert_any(trans, 0L, "hello")
+
+  text <- arr$insert_text(trans, 1L)
+  expect_true(inherits(text, "TextRef"))
+  text$push(trans, "hello")
+  text$push(trans, " world")
+  expect_equal(text$get_string(trans), "hello world")
+
+  nested_arr <- arr$insert_array(trans, 2L)
+  expect_true(inherits(nested_arr, "ArrayRef"))
+  nested_arr$insert_any(trans, 0L, 42L)
+  expect_equal(nested_arr$len(trans), 1L)
+
+  nested_map <- arr$insert_map(trans, 3L)
+  expect_true(inherits(nested_map, "MapRef"))
+  nested_map$insert_any(trans, "k", TRUE)
+  expect_equal(nested_map$len(trans), 1L)
+
+  expect_equal(arr$len(trans), 4L)
   trans$drop()
 })
 
