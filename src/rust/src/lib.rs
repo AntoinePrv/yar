@@ -221,11 +221,15 @@ impl Doc {
     }
 
     fn get_or_insert_text(&self, name: &str) -> TextRef {
-        TextRef(self.doc.get_or_insert_text(name))
+        self.doc.get_or_insert_text(name).into()
     }
 
     fn get_or_insert_map(&self, name: &str) -> MapRef {
-        MapRef(self.doc.get_or_insert_map(name))
+        self.doc.get_or_insert_map(name).into()
+    }
+
+    fn get_or_insert_array(&self, name: &str) -> ArrayRef {
+        self.doc.get_or_insert_array(name).into()
     }
 }
 

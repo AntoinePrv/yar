@@ -35,6 +35,8 @@ Doc$get_or_insert_text <- function(name) .Call(wrap__Doc__get_or_insert_text, se
 
 Doc$get_or_insert_map <- function(name) .Call(wrap__Doc__get_or_insert_map, self, name)
 
+Doc$get_or_insert_array <- function(name) .Call(wrap__Doc__get_or_insert_array, self, name)
+
 #' @export
 `$.Doc` <- function (self, name) { func <- Doc[[name]]; environment(func) <- environment(); func }
 

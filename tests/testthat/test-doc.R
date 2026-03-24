@@ -21,6 +21,20 @@ test_that("two Docs have different guids", {
   expect_false(Doc$new()$guid() == Doc$new()$guid())
 })
 
+for (item in list(
+  list(method = "get_or_insert_text",  class = "TextRef"),
+  list(method = "get_or_insert_map",   class = "MapRef"),
+  list(method = "get_or_insert_array", class = "ArrayRef")
+)) {
+  local({
+    test_that(paste("Doc", item$method, "returns", item$class), {
+      doc <- Doc$new()
+      obj <- doc[[item$method]]("root")
+      expect_true(inherits(obj, item$class))
+    })
+  }, list(item = item))
+}
+
 test_that("Transaction$new returns a Transaction", {
   doc <- Doc$new()
   trans <- Transaction$new(doc)
