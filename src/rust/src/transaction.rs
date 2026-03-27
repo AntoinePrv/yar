@@ -26,17 +26,25 @@ pub enum DynTransaction<'doc> {
 
 #[extendr]
 pub struct Transaction {
-    // Transaction auto commits on Drop, and keeps a lock
-    // We need to be able to explicitly drop the lock.
-    transaction: Option<DynTransaction<'static>>,
-    // Keep Document alive while the transaction is alive
+    // Transaction auto commits on Drop, and keeps a lock onto the Doc.
+    transaction: std::mem::ManuallyDrop<Option<DynTransaction<'static>>>,
+    // Keeps the Doc alive while the transaction is alive.
     #[allow(dead_code)]
     owner: Robj,
 }
 
+impl Drop for Transaction {
+    fn drop(&mut self) {
+        // Safety: transaction must be dropped before owner so that the Doc is still
+        // alive when the transaction releases its borrow/lock on it.
+        unsafe { std::mem::ManuallyDrop::drop(&mut self.transaction) };
+        // owner drops here, potentially allowing the Doc to be freed by R's GC.
+    }
+}
+
 impl Transaction {
     pub(crate) fn try_dyn(&self) -> Result<&DynTransaction<'static>, Error> {
-        match &self.transaction {
+        match &*self.transaction {
             Some(trans) => Ok(trans),
             None => Err(Error::Other("Transaction was dropped".into())),
         }
@@ -44,7 +52,7 @@ impl Transaction {
 
     pub(crate) fn try_mut(&mut self) -> Result<&mut yrs::TransactionMut<'static>, Error> {
         use DynTransaction::{Read, Write};
-        match &mut self.transaction {
+        match &mut *self.transaction {
             Some(Write(trans)) => Ok(trans),
             Some(Read(_)) => Err(Error::Other("Transaction is readonly".into())),
             None => Err(Error::Other("Transaction was dropped".into())),
@@ -67,13 +75,15 @@ impl Transaction {
             (false, _) => DynTransaction::Read(doc.transact()),
         };
 
-        // Safety: Doc live in R memory and is kept alive in the owner field of this struct
+        // Safety: Doc lives in R memory and is kept alive by the `owner` field of this struct.
+        // R's GC is non-moving, so the pointer inside the transaction remains valid as long as
+        // the Doc is not freed. `owner: Robj` prevents collection via R_PreserveObject semantics.
         let transaction = unsafe {
             std::mem::transmute::<DynTransaction<'_>, DynTransaction<'static>>(transaction)
         };
         Transaction {
             owner: doc.into(),
-            transaction: Some(transaction),
+            transaction: std::mem::ManuallyDrop::new(Some(transaction)),
         }
     }
 
@@ -92,7 +102,7 @@ impl Transaction {
     }
 
     pub fn unlock(&mut self) {
-        self.transaction = None;
+        *self.transaction = None;
     }
 
     pub fn state_vector(&self) -> Result<StateVector, Error> {
