@@ -84,6 +84,11 @@ impl TextRef {
         );
         Ok(())
     }
+
+    pub fn unobserve(&self, key: &Robj) -> Result<(), Error> {
+        self.0.unobserve(Origin::new(key)?);
+        Ok(())
+    }
 }
 
 #[extendr]

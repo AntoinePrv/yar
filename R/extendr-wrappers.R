@@ -141,6 +141,8 @@ TextRef$get_string <- function(transaction) .Call(wrap__TextRef__get_string, sel
 
 TextRef$observe <- function(f, key) .Call(wrap__TextRef__observe, self, f, key)
 
+TextRef$unobserve <- function(key) .Call(wrap__TextRef__unobserve, self, key)
+
 #' @export
 `$.TextRef` <- function (self, name) { func <- TextRef[[name]]; environment(func) <- environment(); func }
 

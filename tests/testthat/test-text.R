@@ -81,6 +81,31 @@ test_that("Text observe callback can read current state via transaction", {
   expect_equal(observed_delta, list(list(insert = "hello", attributes = NULL)))
 })
 
+test_that("Text unobserve stops callback from firing", {
+  doc <- Doc$new()
+  text <- doc$get_or_insert_text("article")
+
+  count <- 0L
+  text$observe(
+    function(trans, event) count <<- count + 1L,
+    key = 1L
+  )
+
+  doc$with_transaction(
+    function(trans) text$push(trans, "hello"),
+    mutable = TRUE
+  )
+  expect_equal(count, 1L)
+
+  text$unobserve(key = 1L)
+
+  doc$with_transaction(
+    function(trans) text$push(trans, " world"),
+    mutable = TRUE
+  )
+  expect_equal(count, 1L)
+})
+
 test_that("Text observe callback transaction cannot be used after callback returns", {
   doc <- Doc$new()
   text <- doc$get_or_insert_text("article")
