@@ -1,3 +1,59 @@
+use extendr_api::prelude::*;
+
+impl<T, Y> lifetime::Owner<Y> for ExternalPtr<T>
+where
+    T: AsRef<lifetime::CheckedRef<Y>> + From<lifetime::CheckedRef<Y>>,
+    T: IntoRobj + 'static,
+{
+    fn wrap(r: lifetime::CheckedRef<Y>) -> Self {
+        let t: T = r.into();
+        // Converting to Robj first as the converter will set the class symbol attribute,
+        // otherwise it will only be seen as an `externalptr` from R.
+        let robj = t.into_robj();
+        // PANICS: Robj was just created with the proper type
+        TryInto::<ExternalPtr<T>>::try_into(robj).unwrap()
+    }
+
+    fn inner(&self) -> &lifetime::CheckedRef<Y> {
+        self.as_ref().as_ref()
+    }
+}
+
+pub trait ExtendrRef<Y> {
+    type Error;
+    type Owner: lifetime::Owner<Y>;
+
+    fn guard<'a>(r: &'a Y) -> lifetime::Guard<'a, Y, Self::Owner>;
+
+    fn try_map<R>(&self, f: impl FnOnce(&Y) -> R) -> Result<R, Self::Error>;
+}
+
+impl<T, Y> ExtendrRef<Y> for T
+where
+    T: AsRef<lifetime::CheckedRef<Y>>,
+    ExternalPtr<T>: lifetime::Owner<Y>,
+{
+    type Error = extendr_api::Error;
+    type Owner = ExternalPtr<T>;
+
+    fn guard<'a>(r: &'a Y) -> lifetime::Guard<'a, Y, Self::Owner> {
+        lifetime::CheckedRef::new_guarded(r)
+    }
+
+    fn try_map<R>(&self, f: impl FnOnce(&Y) -> R) -> Result<R, Error> {
+        self.as_ref().map(f).ok_or_else(|| {
+            Error::Other(
+                concat!(
+                    "Object is invalid.",
+                    " This happened because you tried to capture an parameter ",
+                    " in callback (observe, with_transaction) and use it afterwards."
+                )
+                .into(),
+            )
+        })
+    }
+}
+
 pub(crate) mod lifetime {
 
     use std::{cell::Cell, marker::PhantomData, ptr::NonNull};

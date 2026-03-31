@@ -3,7 +3,7 @@ use yrs::types::{text::TextEvent as YTextEvent, PathSegment as YPathSegment};
 use yrs::{GetString as YGetString, Observable as YObservable, Text as YText};
 
 use crate::type_conversion::IntoExtendr;
-use crate::utils::lifetime;
+use crate::utils::{lifetime, ExtendrRef};
 use crate::{try_read, Origin, Transaction};
 
 #[extendr]
@@ -72,7 +72,7 @@ impl TextRef {
             move |trans: &yrs::TransactionMut<'_>, event: &YTextEvent| {
                 // Converting to Robj first as the converter will set the class symbol attribute,
                 // otherwise it will only be seen as an `externalptr` from R.
-                let event = TextEvent::from_ref(event);
+                let event = TextEvent::guard(event);
                 let mut trans: Robj = Transaction::from_ref(trans).into();
                 let result = f.call(pairlist!(trans.clone(), event.get().clone()));
                 TryInto::<&mut Transaction>::try_into(&mut trans)
@@ -94,38 +94,15 @@ impl TextRef {
 #[extendr]
 struct TextEvent(lifetime::CheckedRef<YTextEvent>);
 
-impl TextEvent {
-    fn from_ref<'a>(
-        event: &'a YTextEvent,
-    ) -> lifetime::Guard<'a, YTextEvent, ExternalPtr<TextEvent>> {
-        lifetime::CheckedRef::new_guarded(event)
-    }
-
-    fn try_with<R>(&self, f: impl FnOnce(&YTextEvent) -> R) -> Result<R, Error> {
-        self.0.map(f).ok_or_else(|| {
-            Error::Other(
-                concat!(
-                    "Event is invalid.",
-                    " This happened because you tried to capture an event in an `observe`",
-                    " callback and use it afterwards."
-                )
-                .into(),
-            )
-        })
+impl AsRef<lifetime::CheckedRef<YTextEvent>> for TextEvent {
+    fn as_ref(&self) -> &lifetime::CheckedRef<YTextEvent> {
+        &self.0
     }
 }
 
-impl lifetime::Owner<YTextEvent> for ExternalPtr<TextEvent> {
-    fn wrap(r: lifetime::CheckedRef<YTextEvent>) -> Self {
-        // Converting to Robj first as the converter will set the class symbol attribute,
-        // otherwise it will only be seen as an `externalptr` from R.
-        let robj = TextEvent(r).into_robj();
-        // PANICS: Robj was just created with the proper type
-        TryInto::<ExternalPtr<TextEvent>>::try_into(robj).unwrap()
-    }
-
-    fn inner(&self) -> &lifetime::CheckedRef<YTextEvent> {
-        &self.as_ref().0
+impl From<lifetime::CheckedRef<YTextEvent>> for TextEvent {
+    fn from(value: lifetime::CheckedRef<YTextEvent>) -> Self {
+        Self(value)
     }
 }
 
@@ -133,11 +110,11 @@ impl lifetime::Owner<YTextEvent> for ExternalPtr<TextEvent> {
 impl TextEvent {
     fn target(&self) -> Result<TextRef, Error> {
         // Cloning is shallow BranchPtr copy pinting to same data.
-        self.try_with(|event| event.target().clone().into())
+        self.try_map(|event| event.target().clone().into())
     }
 
     fn delta(&self, transaction: &Transaction) -> Result<List, Error> {
-        self.try_with(|event| {
+        self.try_map(|event| {
             transaction.try_write().map(|trans| {
                 event
                     .delta(trans)
@@ -151,7 +128,7 @@ impl TextEvent {
     }
 
     fn path(&self) -> Result<List, Error> {
-        self.try_with(|event| {
+        self.try_map(|event| {
             event
                 .path()
                 .into_iter()
