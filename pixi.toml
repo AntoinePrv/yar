@@ -97,20 +97,29 @@ fmt-tombi = "tombi format"
 fmt = { depends-on = ["fmt-cargo", "fmt-air", "fmt-tombi"] }
 # Checkers
 check-typos = "typos --write-changes"
-check-cargo = """
-cargo --locked check \
-    --manifest-path=src/rust/Cargo.toml \
-    --target-dir=$PIXI_PROJECT_ROOT/target/build \
-    --all-targets \
-    --workspace \
-"""
-check-clippy = { cmd = "cargo --locked clippy --manifest-path=src/rust/Cargo.toml --fix --allow-staged", env = { RUSTFLAGS = "-Dwarnings", CARGO_TARGET_DIR = "$PIXI_PROJECT_ROOT/target/clippy" } }
 check = { depends-on = ["check-cargo", "check-clippy", "check-typos"] }
 # Pre-commit easy alias
 pre-commit = "pre-commit"
 pre-commit-all = "pre-commit run --all-files"
 # Alias for what is being run in ci (pre-commit runs checks and formatter)
 ci = { depends-on = ["pre-commit-all"] }
+
+[feature.check.tasks.check-cargo]
+cmd = """
+cargo --locked check \
+    --manifest-path=src/rust/Cargo.toml \
+    --target-dir=$PIXI_PROJECT_ROOT/target/check \
+    --all-targets \
+    --workspace \
+"""
+env.RUSTFLAGS = "-Dwarnings"
+
+[feature.check.tasks.check-clippy]
+cmd = """
+cargo --locked clippy --manifest-path=src/rust/Cargo.toml --fix --allow-staged
+"""
+env.RUSTFLAGS = "-Dwarnings"
+env.CARGO_TARGET_DIR = "$PIXI_PROJECT_ROOT/target/clippy"
 
 [feature.dev.dependencies]
 rust-src = ">=1.79.0"

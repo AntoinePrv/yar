@@ -40,7 +40,7 @@ where
     }
 }
 
-pub trait ExtendrRef<Y> {
+pub(crate) trait ExtendrRef<Y> {
     type Error;
     type Owner: lifetime::Owner<Y>;
 
@@ -122,7 +122,7 @@ pub(crate) mod lifetime {
             Self(Some(NonNull::new_unchecked(r as *const T as *mut T)).into())
         }
 
-        pub fn new_guarded<'a, O: Owner<T>>(r: &'a T) -> Guard<'a, T, O> {
+        pub(crate) fn new_guarded<'a, O: Owner<T>>(r: &'a T) -> Guard<'a, T, O> {
             // SAFETY: The raw pointer is valid as long as 'a. The Guard is tied to 'a
             // and clears the pointer on drop. Access is only through `map()`, whose
             // HRTB (Higher-Rank Trait Bounds) prevents the reference from escaping the closure.
@@ -155,7 +155,7 @@ pub(crate) mod lifetime {
     }
 
     #[must_use]
-    pub struct Guard<'a, T, O: Owner<T>> {
+    pub(crate) struct Guard<'a, T, O: Owner<T>> {
         reference: O,
         _phantom: PhantomData<&'a T>,
     }
