@@ -69,11 +69,33 @@ ArrayRef$get <- function(transaction, index) .Call(wrap__ArrayRef__get, self, tr
 
 ArrayRef$remove <- function(transaction, index) .Call(wrap__ArrayRef__remove, self, transaction, index)
 
+ArrayRef$observe <- function(f, key) .Call(wrap__ArrayRef__observe, self, f, key)
+
+ArrayRef$unobserve <- function(key) .Call(wrap__ArrayRef__unobserve, self, key)
+
 #' @export
 `$.ArrayRef` <- function (self, name) { func <- ArrayRef[[name]]; environment(func) <- environment(); func }
 
 #' @export
 `[[.ArrayRef` <- `$.ArrayRef`
+
+ArrayEvent <- new.env(parent = emptyenv())
+
+ArrayEvent$target <- function() .Call(wrap__ArrayEvent__target, self)
+
+ArrayEvent$delta <- function(transaction) .Call(wrap__ArrayEvent__delta, self, transaction)
+
+ArrayEvent$path <- function() .Call(wrap__ArrayEvent__path, self)
+
+ArrayEvent$inserts <- function(transaction) .Call(wrap__ArrayEvent__inserts, self, transaction)
+
+ArrayEvent$removes <- function(transaction) .Call(wrap__ArrayEvent__removes, self, transaction)
+
+#' @export
+`$.ArrayEvent` <- function (self, name) { func <- ArrayEvent[[name]]; environment(func) <- environment(); func }
+
+#' @export
+`[[.ArrayEvent` <- `$.ArrayEvent`
 
 MapRef <- new.env(parent = emptyenv())
 
