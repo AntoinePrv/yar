@@ -1,5 +1,5 @@
 use extendr_api::prelude::*;
-use yrs::types::{Attrs as YAttrs, Delta as YDelta};
+use yrs::types::{Attrs as YAttrs, Delta as YDelta, EntryChange as YEntryChange};
 use yrs::{Any as YAny, Out as YOut};
 
 pub trait IntoExtendr<T> {
@@ -21,41 +21,52 @@ impl<T: IntoExtendr<Robj>> IntoExtendr<Robj> for Option<T> {
     }
 }
 
-impl IntoExtendr<Robj> for YAny {
+impl<K, V> IntoExtendr<Robj> for &std::collections::HashMap<K, V>
+where
+    K: AsRef<str>,
+    for<'a> &'a V: IntoExtendr<Robj>,
+{
     fn extendr(self) -> extendr_api::Result<Robj> {
-        Ok(match self {
-            YAny::Null | YAny::Undefined => Robj::from(()),
-            YAny::Bool(v) => Robj::from(v),
-            YAny::Number(v) => Robj::from(v),
+        let n = self.len();
+        let mut keys = Strings::new(n);
+        let mut values = List::new(n);
+        for (i, (k, v)) in self.iter().enumerate() {
+            keys.set_elt(i, k.as_ref().into());
+            values.set_elt(i, v.extendr()?)?;
+        }
+        if n > 0 {
+            values.set_names(keys.as_slice())?;
+        }
+        Ok(values.into_robj())
+    }
+}
+
+impl<T> IntoExtendr<Robj> for &[T]
+where
+    for<'a> &'a T: IntoExtendr<Robj>,
+{
+    fn extendr(self) -> extendr_api::Result<Robj> {
+        Ok(List::from_values(self.iter().map(|e| e.extendr())).into())
+    }
+}
+
+impl IntoExtendr<Robj> for &YAny {
+    fn extendr(self) -> extendr_api::Result<Robj> {
+        match self {
+            YAny::Null | YAny::Undefined => Ok(().into()),
+            YAny::Bool(v) => Ok(v.into()),
+            YAny::Number(v) => Ok(v.into()),
             // R has no native i64; use i32 if it fits, otherwise error
             YAny::BigInt(v) => {
-                let v = i32::try_from(v)
+                let v = i32::try_from(*v)
                     .map_err(|_| Error::Other(format!("{v} does not fit in i32")))?;
-                Robj::from(v)
+                Ok(v.into())
             }
-            YAny::String(v) => Robj::from(v.as_ref()),
-            YAny::Buffer(v) => Raw::from_bytes(v.as_ref()).into(),
-            YAny::Array(v) => {
-                let values: Vec<Robj> = v
-                    .iter()
-                    .map(|e| e.clone().extendr())
-                    .collect::<extendr_api::Result<_>>()?;
-                List::from_values(values).into()
-            }
-            YAny::Map(v) => {
-                let n = v.len();
-                let mut keys = Strings::new(n);
-                let mut values = List::new(n);
-                for (i, (k, v)) in v.iter().enumerate() {
-                    keys.set_elt(i, k.as_str().into());
-                    values.set_elt(i, v.clone().extendr()?)?;
-                }
-                if n > 0 {
-                    values.set_names(keys.as_slice())?;
-                }
-                values.into()
-            }
-        })
+            YAny::String(v) => Ok(v.as_ref().into()),
+            YAny::Buffer(v) => Ok(Raw::from_bytes(v.as_ref()).into()),
+            YAny::Array(v) => v.extendr(),
+            YAny::Map(v) => v.extendr(),
+        }
     }
 }
 
@@ -76,22 +87,6 @@ impl IntoExtendr<Robj> for YOut {
             YOut::YXmlText(_) => Err(Error::Other("YXmlText is not yet supported".to_string())),
             YOut::UndefinedRef(_) => Err(Error::Other("UndefinedRef is not supported".to_string())),
         }
-    }
-}
-
-impl IntoExtendr<Robj> for &YAttrs {
-    fn extendr(self) -> extendr_api::Result<Robj> {
-        let n = self.len();
-        let mut keys = Strings::new(n);
-        let mut values = List::new(n);
-        for (i, (k, v)) in self.iter().enumerate() {
-            keys.set_elt(i, k.as_ref().into());
-            values.set_elt(i, v.clone().extendr()?)?;
-        }
-        if n > 0 {
-            values.set_names(keys.as_slice())?;
-        }
-        Ok(values.into())
     }
 }
 
@@ -116,6 +111,24 @@ impl IntoExtendr<Robj> for &YDelta<YOut> {
                     [Robj::from(n), attrs.as_deref().extendr()?],
                 )?
                 .into())
+            }
+        }
+    }
+}
+
+impl IntoExtendr<Robj> for &YEntryChange {
+    fn extendr(self) -> extendr_api::Result<Robj> {
+        match self {
+            YEntryChange::Inserted(new) => {
+                Ok(List::from_names_and_values(["inserted"], [new.clone().extendr()?])?.into())
+            }
+            YEntryChange::Updated(old, new) => Ok(List::from_names_and_values(
+                ["removed", "inserted"],
+                [old.clone().extendr()?, new.clone().extendr()?],
+            )?
+            .into()),
+            YEntryChange::Removed(old) => {
+                Ok(List::from_names_and_values(["removed"], [old.clone().extendr()?])?.into())
             }
         }
     }
@@ -371,6 +384,36 @@ mod tests {
         extendr_api::test! {
             let attrs: YAttrs = HashMap::new();
             assert_eq!(attrs.extendr().unwrap(), R!(r#"list()"#).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_to_entry_change_inserted() {
+        extendr_api::test! {
+            let change = YEntryChange::Inserted(YOut::Any(YAny::Number(1.5)));
+            let robj = change.extendr().unwrap();
+            assert_eq!(robj, R!(r#"list(inserted=1.5)"#).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_to_entry_change_removed() {
+        extendr_api::test! {
+            let change = YEntryChange::Removed(YOut::Any(YAny::Bool(true)));
+            let robj = change.extendr().unwrap();
+            assert_eq!(robj, R!(r#"list(removed=TRUE)"#).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_to_entry_change_updated() {
+        extendr_api::test! {
+            let change = YEntryChange::Updated(
+                YOut::Any(YAny::String(Arc::from("old"))),
+                YOut::Any(YAny::String(Arc::from("new"))),
+            );
+            let robj = change.extendr().unwrap();
+            assert_eq!(robj, R!(r#"list(removed="old", inserted="new")"#).unwrap());
         }
     }
 

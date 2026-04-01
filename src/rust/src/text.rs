@@ -85,15 +85,11 @@ impl TextEvent {
         self.try_map(|event| event.target().clone().into())
     }
 
-    fn delta(&self, transaction: &Transaction) -> Result<List, Error> {
+    fn delta(&self, transaction: &Transaction) -> Result<Robj, Error> {
         self.try_map(|event| {
-            transaction.try_write().map(|trans| {
-                event
-                    .delta(trans)
-                    .iter()
-                    .map(|delta| delta.extendr())
-                    .collect::<Result<List, _>>()
-            })
+            transaction
+                .try_write()
+                .map(|trans| event.delta(trans).extendr())
         })
         .and_then(|r| r) // TODO(MSRV 1.89) .flatten()
         .and_then(|r| r) // TODO(MSRV 1.89) .flatten()
