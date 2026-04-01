@@ -3,7 +3,7 @@ use yrs::types::{
     Attrs as YAttrs, Change as YChange, Delta as YDelta, EntryChange as YEntryChange,
     PathSegment as YPathSegment,
 };
-use yrs::{Any as YAny, Out as YOut};
+use yrs::{block::ID as YID, Any as YAny, Out as YOut};
 
 pub trait IntoExtendr<T> {
     fn extendr(self) -> extendr_api::Result<T>;
@@ -23,6 +23,41 @@ impl<T: IntoExtendr<Robj>> IntoExtendr<Robj> for Option<T> {
         }
     }
 }
+
+macro_rules! impl_safe_int {
+    ($($t:ty),*) => {$(
+        impl IntoExtendr<Robj> for $t {
+            fn extendr(self) -> extendr_api::Result<Robj> {
+                Ok((self as i32).into_robj())
+            }
+        }
+        impl IntoExtendr<Robj> for &$t {
+            fn extendr(self) -> extendr_api::Result<Robj> {
+                (*self).extendr()
+            }
+        }
+    )*};
+}
+
+macro_rules! impl_checked_int {
+    ($($t:ty),*) => {$(
+        impl IntoExtendr<Robj> for $t {
+            fn extendr(self) -> extendr_api::Result<Robj> {
+                let v = i32::try_from(self)
+                    .map_err(|_| Error::Other(format!("{self} does not fit in i32")))?;
+                Ok(v.into_robj())
+            }
+        }
+        impl IntoExtendr<Robj> for &$t {
+            fn extendr(self) -> extendr_api::Result<Robj> {
+                (*self).extendr()
+            }
+        }
+    )*};
+}
+
+impl_safe_int!(i8, u8, i16, u16, i32);
+impl_checked_int!(u32, i64, u64, i128, u128, isize, usize);
 
 impl<K, V> IntoExtendr<Robj> for &std::collections::HashMap<K, V>
 where
@@ -62,11 +97,30 @@ where
     }
 }
 
+impl<T> IntoExtendr<Robj> for &std::collections::HashSet<T>
+where
+    for<'a> &'a T: IntoExtendr<Robj>,
+{
+    fn extendr(self) -> extendr_api::Result<Robj> {
+        Ok(List::from_values(self.iter().map(|e| e.extendr())).into())
+    }
+}
+
+impl IntoExtendr<Robj> for &YID {
+    fn extendr(self) -> extendr_api::Result<Robj> {
+        Ok(List::from_pairs([
+            ("client", self.client.extendr()?),
+            ("clock", self.clock.extendr()?),
+        ])
+        .into_robj())
+    }
+}
+
 impl IntoExtendr<Robj> for &YPathSegment {
     fn extendr(self) -> extendr_api::Result<Robj> {
         match self {
             YPathSegment::Key(k) => Ok(k.into_robj()),
-            YPathSegment::Index(i) => Ok(i.into_robj()),
+            YPathSegment::Index(i) => i.extendr(),
         }
     }
 }
@@ -77,12 +131,7 @@ impl IntoExtendr<Robj> for &YAny {
             YAny::Null | YAny::Undefined => Ok(().into()),
             YAny::Bool(v) => Ok(v.into()),
             YAny::Number(v) => Ok(v.into()),
-            // R has no native i64; use i32 if it fits, otherwise error
-            YAny::BigInt(v) => {
-                let v = i32::try_from(*v)
-                    .map_err(|_| Error::Other(format!("{v} does not fit in i32")))?;
-                Ok(v.into())
-            }
+            YAny::BigInt(v) => v.extendr(),
             YAny::String(v) => Ok(v.as_ref().into()),
             YAny::Buffer(v) => Ok(Raw::from_bytes(v.as_ref()).into()),
             YAny::Array(v) => v.extendr(),
@@ -126,20 +175,12 @@ impl IntoExtendr<Robj> for &YDelta<YOut> {
                 ("attributes", attrs.as_deref().extendr()?),
             ])
             .into_robj()),
-            YDelta::Deleted(n) => {
-                let n = i32::try_from(*n)
-                    .map_err(|_| Error::Other(format!("{n} does not fit in i32")))?;
-                Ok(List::from_pairs([("deleted", Robj::from(n))]).into_robj())
-            }
-            YDelta::Retain(n, attrs) => {
-                let n = i32::try_from(*n)
-                    .map_err(|_| Error::Other(format!("{n} does not fit in i32")))?;
-                Ok(List::from_pairs([
-                    ("retain", Robj::from(n)),
-                    ("attributes", attrs.as_deref().extendr()?),
-                ])
-                .into_robj())
-            }
+            YDelta::Deleted(n) => Ok(List::from_pairs([("deleted", n.extendr()?)]).into_robj()),
+            YDelta::Retain(n, attrs) => Ok(List::from_pairs([
+                ("retain", n.extendr()?),
+                ("attributes", attrs.as_deref().extendr()?),
+            ])
+            .into_robj()),
         }
     }
 }
@@ -169,16 +210,8 @@ impl IntoExtendr<Robj> for &YChange {
                 let items = values.extendr()?;
                 Ok(List::from_pairs([("added", items)]).into_robj())
             }
-            YChange::Removed(n) => {
-                let n = i32::try_from(*n)
-                    .map_err(|_| Error::Other(format!("{n} does not fit in i32")))?;
-                Ok(List::from_pairs([("removed", Robj::from(n))]).into_robj())
-            }
-            YChange::Retain(n) => {
-                let n = i32::try_from(*n)
-                    .map_err(|_| Error::Other(format!("{n} does not fit in i32")))?;
-                Ok(List::from_pairs([("retain", Robj::from(n))]).into_robj())
-            }
+            YChange::Removed(n) => Ok(List::from_pairs([("removed", n.extendr()?)]).into_robj()),
+            YChange::Retain(n) => Ok(List::from_pairs([("retain", n.extendr()?)]).into_robj()),
         }
     }
 }
@@ -266,10 +299,39 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_safe_integers() {
+        extendr_api::test! {
+            assert_eq!((0i8).extendr().unwrap(), r!(0i32));
+            assert_eq!((255u8).extendr().unwrap(), r!(255i32));
+            assert_eq!((i16::MAX).extendr().unwrap(), r!(32767i32));
+            assert_eq!((u16::MAX).extendr().unwrap(), r!(65535i32));
+            assert_eq!((42i32).extendr().unwrap(), r!(42i32));
+        }
+    }
+
+    #[test]
+    fn test_checked_integers_ok() {
+        extendr_api::test! {
+            assert_eq!((100u32).extendr().unwrap(), r!(100i32));
+            assert_eq!((100i64).extendr().unwrap(), r!(100i32));
+            assert_eq!((100usize).extendr().unwrap(), r!(100i32));
+        }
+    }
+
+    #[test]
+    fn test_checked_integers_overflow() {
+        extendr_api::test! {
+            assert!((u32::MAX).extendr().is_err());
+            assert!((i64::MAX).extendr().is_err());
+            assert!((u64::MAX).extendr().is_err());
+        }
+    }
+
+    #[test]
     fn test_to_path_segment() {
         extendr_api::test! {
             assert_eq!(YPathSegment::Key(Arc::from("foo")).extendr().unwrap(), r!("foo"));
-            assert_eq!(YPathSegment::Index(3u32).extendr().unwrap(), r!(3u32));
+            assert_eq!(YPathSegment::Index(3u32).extendr().unwrap(), r!(3i32));
         }
     }
 
@@ -283,7 +345,7 @@ mod tests {
                 YPathSegment::Index(2u32),
             ]);
             let robj = path.extendr().unwrap();
-            assert_eq!(robj, R!(r#"list("foo", 2)"#).unwrap());
+            assert_eq!(robj, R!(r#"list("foo", 2L)"#).unwrap());
         }
     }
 
@@ -515,6 +577,22 @@ mod tests {
             let change = YChange::Retain(5);
             let robj = change.extendr().unwrap();
             assert_eq!(robj, R!(r#"list(retain=5L)"#).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_to_id() {
+        extendr_api::test! {
+            let id = YID { client: 1, clock: 2 };
+            assert_eq!(id.extendr().unwrap(), R!(r#"list(client=1L, clock=2L)"#).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_to_id_client_overflow() {
+        extendr_api::test! {
+            let id = YID { client: u64::MAX, clock: 0 };
+            assert!(id.extendr().is_err());
         }
     }
 
