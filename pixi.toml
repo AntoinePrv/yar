@@ -12,12 +12,26 @@ dev = { features = ["build", "test", "check", "dev"], solve-group = "default" }
 
 [feature.build.dependencies]
 sccache = ">=0.8.1"
-c-compiler = ">=1.7.0,<2"
 rust = ">=1.85.0"
 # R library and headers needed at compile time
 r-base = "*"
 # R tools needed to generate NAMESPACE
 r-roxygen2 = "*"
+
+[feature.build.target.unix.dependencies]
+c-compiler = ">=1.7.0,<2"
+
+# R on conda-forge Windows is built with Rtools (MinGW); the import library is
+# MinGW-format so the MinGW linker is required even though R.lib exists.
+[feature.build.target.win-64.dependencies]
+m2w64-toolchain = "*"
+m2-filesystem = "*"
+m2-sed = "*"
+m2-grep = "*"
+m2-coreutils = "*"
+m2-make = "*"
+m2-pkg-config = "*"
+m2-automake-wrapper = "*"
 
 [feature.build.activation.env]
 RUSTC_WRAPPER = "sccache"

@@ -44,7 +44,9 @@ jobs:
       - name: Set Windows link flags for R
         if: runner.os == 'Windows'
         shell: pwsh
-        run: echo "RUSTFLAGS=-L native=$env:CONDA_PREFIX/Library/lib -l R" >> $env:GITHUB_ENV
+        run: |
+          echo "CARGO_BUILD_TARGET=x86_64-pc-windows-gnu" >> $env:GITHUB_ENV
+          echo "RUSTFLAGS=-L native=$env:CONDA_PREFIX/lib/R/bin/x64 -l R" >> $env:GITHUB_ENV
       - name: Unit tests
         run: pixi run test-cargo
       - name: R integration Tests
