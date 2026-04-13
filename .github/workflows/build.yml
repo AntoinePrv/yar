@@ -41,6 +41,10 @@ jobs:
           pixi-version: v0.65.0
           cache: true
           environments: dev
+      - name: Set Windows link flags for R
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "RUSTFLAGS=-L native=$env:CONDA_PREFIX/lib/R/bin/x64 -l R" >> $env:GITHUB_ENV
       - name: Unit tests
         run: pixi run test-cargo
       - name: R integration tests
