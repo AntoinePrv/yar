@@ -3,7 +3,7 @@ name = "yr"
 description = "y-crdt bindings to R lang"
 authors = ["AntoinePrv <AntoinePrv@users.noreply.github.com>"]
 channels = ["conda-forge"]
-platforms = ["osx-64", "osx-arm64", "linux-64", "linux-aarch64"]
+platforms = ["osx-64", "osx-arm64", "linux-64", "linux-aarch64", "win-64"]
 
 [environments]
 dev = { features = ["build", "test", "check", "dev"], solve-group = "default" }
@@ -12,12 +12,26 @@ dev = { features = ["build", "test", "check", "dev"], solve-group = "default" }
 
 [feature.build.dependencies]
 sccache = ">=0.8.1"
-c-compiler = ">=1.7.0,<2"
 rust = ">=1.85.0"
 # R library and headers needed at compile time
 r-base = "*"
 # R tools needed to generate NAMESPACE
 r-roxygen2 = "*"
+
+[feature.build.target.unix.dependencies]
+c-compiler = ">=1.7.0,<2"
+
+# R on conda-forge Windows is built with Rtools (MinGW); the import library is
+# MinGW-format so the MinGW linker is required even though R.lib exists.
+[feature.build.target.win-64.dependencies]
+m2w64-toolchain = "*"
+m2-filesystem = "*"
+m2-sed = "*"
+m2-grep = "*"
+m2-coreutils = "*"
+m2-make = "*"
+m2-pkg-config = "*"
+m2-automake-wrapper = "*"
 
 [feature.build.activation.env]
 RUSTC_WRAPPER = "sccache"
@@ -27,6 +41,7 @@ RUSTFLAGS = "-C link-arg=-rpath -C link-arg=$CONDA_PREFIX/lib/"
 
 [feature.build.target.linux.activation.env]
 RUSTFLAGS = "-C link-arg=-Wl,-rpath,$CONDA_PREFIX/lib/R/lib"
+
 
 [feature.build.tasks.build-lib]
 description = "Compile Rust code into a library"

@@ -31,7 +31,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-26-intel, macos-26]
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-26-intel, macos-26, windows-2025]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -41,5 +41,11 @@ jobs:
           pixi-version: v0.65.0
           cache: true
           environments: dev
-      - name: Test bindings
+      - name: Set Windows link flags for R
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "RUSTFLAGS=-L native=$env:CONDA_PREFIX/lib/R/bin/x64 -l R" >> $env:GITHUB_ENV
+      - name: Unit tests
+        run: pixi run test-cargo
+      - name: R integration Tests
         run: pixi run test-r
