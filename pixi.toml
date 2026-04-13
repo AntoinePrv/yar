@@ -42,6 +42,9 @@ RUSTFLAGS = "-C link-arg=-rpath -C link-arg=$CONDA_PREFIX/lib/"
 [feature.build.target.linux.activation.env]
 RUSTFLAGS = "-C link-arg=-Wl,-rpath,$CONDA_PREFIX/lib/R/lib"
 
+[feature.build.target.win-64.activation.env]
+RUSTFLAGS = "-L native=$CONDA_PREFIX/lib/R/bin/x64 -l R"
+
 [feature.build.tasks.build-lib]
 description = "Compile Rust code into a library"
 # Set target dir so that it does not conflict with the one from R
