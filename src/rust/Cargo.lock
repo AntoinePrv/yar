@@ -296,17 +296,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "r-ycrdt"
-version = "0.1.0"
-dependencies = [
- "extendr-api",
- "extendr-engine",
- "stable_deref_trait",
- "yoke",
- "yrs",
-]
-
-[[package]]
 name = "readonly"
 version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -528,6 +517,17 @@ dependencies = [
  "quote",
  "syn",
  "synstructure",
+]
+
+[[package]]
+name = "yr"
+version = "0.1.0"
+dependencies = [
+ "extendr-api",
+ "extendr-engine",
+ "stable_deref_trait",
+ "yoke",
+ "yrs",
 ]
 
 [[package]]

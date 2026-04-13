@@ -1,5 +1,5 @@
 [workspace]
-name = "r-ycrdt"
+name = "yr"
 description = "y-crdt bindings to R lang"
 authors = ["AntoinePrv <AntoinePrv@users.noreply.github.com>"]
 channels = ["conda-forge"]

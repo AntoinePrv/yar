@@ -1,5 +1,5 @@
 [package]
-name = "r-ycrdt"
+name = "yr"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.81"  # CRAN https://extendr.rs/user-guide/cran-msrv.html
@@ -7,7 +7,7 @@ publish = false
 
 [lib]
 crate-type = ["rlib", "staticlib"]
-name = "r_ycrdt"
+name = "yr"
 
 [[bin]]
 name = "document"

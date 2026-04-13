@@ -21,7 +21,7 @@ pub(crate) use transaction::ExtendrTransaction;
 // Register function with R.
 // See corresponding C code in `entrypoint.c`.
 extendr_api::extendr_module! {
-    mod ycrdt;
+    mod yr;
     use transaction;
     use array;
     use map;
