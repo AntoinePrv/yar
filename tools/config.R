@@ -75,6 +75,11 @@ cfg <- if (is_debug) "debug" else "release"
   ""
 )
 
+# Skip wrapper generation when EXTENDR_SKIP_BUILD_WRAPPERS is set.
+# Generating wrappers is unnecessarily complicated in a cross-compilation
+# context given the wrappers are already committed in the repository.
+.skip_build_wrappers <- Sys.getenv("EXTENDR_SKIP_BUILD_WRAPPERS")
+
 # read in the Makevars.in file checking
 is_windows <- .Platform[["OS.type"]] == "windows"
 
@@ -107,6 +112,7 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@CLEAN_TARGET@", .clean_targets, x = _) |>
   gsub("@LIBDIR@", .libdir, x = _) |>
   gsub("@TARGET@", .target, x = _) |>
+  gsub("@SKIP_WRAPPERS@", .skip_build_wrappers, x = _) |>
   gsub("@PANIC_EXPORTS@", .panic_exports, x = _)
 
 message("Writing `", mv_ofp, "`.")
