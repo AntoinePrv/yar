@@ -92,7 +92,7 @@ typos = "*"
 [feature.check.tasks]
 # Formatters
 fmt-cargo = "cargo fmt --manifest-path=src/rust/Cargo.toml"
-fmt-air = "air format R/ tests/"
+fmt-air = "air format R/ tests/ tools/"
 fmt-tombi = "tombi format"
 fmt = { depends-on = ["fmt-cargo", "fmt-air", "fmt-tombi"] }
 # Checkers
