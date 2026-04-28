@@ -42,6 +42,9 @@ RUSTFLAGS = "-C link-arg=-rpath -C link-arg=$CONDA_PREFIX/lib/"
 [feature.build.target.linux.activation.env]
 RUSTFLAGS = "-C link-arg=-Wl,-rpath,$CONDA_PREFIX/lib/R/lib"
 
+[feature.build.target.win-64.activation.env]
+CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu"
+
 [feature.build.activation.env]
 RUSTC_WRAPPER = "sccache"
 
