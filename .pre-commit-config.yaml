@@ -23,9 +23,10 @@ repos:
       # Formatters
       - id: pixi-format-cargo
         name: "Run cargo format through pixi"
-        entry: pixi run fmt-cargo --
+        entry: pixi run fmt-cargo
         language: system
         types_or: [rust]
+        pass_filenames: false
       - id: pixi-format-air
         name: "Run air format through pixi"
         entry: pixi run fmt-air
