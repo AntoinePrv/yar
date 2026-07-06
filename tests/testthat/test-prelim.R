@@ -38,7 +38,29 @@ test_that("Prelim can be inserted into a Map via Doc transaction", {
       map$insert(trans, "nums", Prelim$detect(list(1L, 2L, 3L)))
       map$insert(trans, "nested_map", Prelim$map(list(a = 1L, b = 2L)))
       map$insert(trans, "nested_arr", Prelim$array(list(1L, 2L)))
+
+      expect_equal(map$len(trans), 4L)
+      expect_setequal(
+        map$keys(trans),
+        c("greeting", "nums", "nested_map", "nested_arr")
+      )
     },
     mutable = TRUE
   )
+})
+
+test_that("Prelim prints its contents", {
+  expect_match(
+    format(Prelim$text("hello")),
+    '^Text\\(.*Inserted\\(Any\\(String\\("hello"\\)\\)'
+  )
+  expect_match(
+    format(Prelim$array(list(1L, 2L))),
+    "^Array\\(ArrayPrelim\\(\\[.*Number\\(1"
+  )
+  expect_match(
+    format(Prelim$map(list(a = 1L, b = 2L))),
+    '^Map\\(MapPrelim\\(\\{.*"a"'
+  )
+  expect_match(format(Prelim$any(42L)), "^Any\\(Number\\(42")
 })

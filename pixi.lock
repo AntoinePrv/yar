@@ -145,6 +145,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-zip-3.0.0-r45h54b55ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/readline-8.3-h853b02a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/rust-1.96.1-h53717f1_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/rust-analyzer-2026.04.27-hb17b654_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sccache-0.16.0-he64ecbb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sed-4.10-h19d0853_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h366c992_103.conda
@@ -381,6 +382,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/r-zip-3.0.0-r45h0557e7b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/readline-8.3-hb682ff5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/rust-1.96.1-h6cf38e9_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/rust-analyzer-2026.04.27-h069e38c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sccache-0.16.0-hb434046_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sed-4.10-he1c5539_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/tk-8.6.13-noxft_h0dc03b3_103.conda
@@ -712,6 +714,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-zip-3.0.0-r45h8eed41d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/readline-8.3-h68b038d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/rust-1.96.1-h5655b98_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/rust-analyzer-2026.04.27-h19f9e61_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/sccache-0.16.0-h19f9e61_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/sigtool-codesign-0.1.3-hc0f2934_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/tapi-1600.0.11.8-h8d8e812_2.conda
@@ -948,6 +951,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-zip-3.0.0-r44hbe92478_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rust-1.96.1-h4ff7c5d_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rust-analyzer-2026.04.27-h6fdd925_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/sccache-0.16.0-h6fdd925_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/sigtool-codesign-0.1.3-h98dc951_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tapi-1600.0.11.8-h997e182_2.conda
@@ -1208,6 +1212,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-yaml-2.3.12-r45heceb674_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-zip-3.0.0-r45heceb674_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/rust-1.96.1-hf8d6059_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/rust-analyzer-2026.04.27-h18a1a76_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/sccache-0.16.0-h18a1a76_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/tbb-2023.0.0-hd3d4ead_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/tk-8.6.13-h6ed50ae_3.conda
@@ -3184,6 +3189,18 @@ packages:
     - __glibc >=2.17
   size: 172088273
   timestamp: 1782996206882
+- conda: https://conda.anaconda.org/conda-forge/linux-64/rust-analyzer-2026.04.27-hb17b654_0.conda
+  sha256: 6efe24ffd920871f1350b9846e4656d7be272c13ab0d5a4d0946c4fa4823e0a8
+  md5: 2917629a16ee42d265c55acadb55cb8c
+  depends:
+  - libgcc >=14
+  - __glibc >=2.17,<3.0.a0
+  constrains:
+  - __glibc >=2.17
+  license: MIT OR Apache-2.0
+  run_exports: {}
+  size: 11755985
+  timestamp: 1777398119265
 - conda: https://conda.anaconda.org/conda-forge/linux-64/sccache-0.16.0-he64ecbb_0.conda
   sha256: d8fc5304789c325c12c1a6a21422cd765ad27ebd464864ced34ced44bd78a14a
   md5: 32a8e18fcb4871e2d3c60254d9fc6614
@@ -5268,6 +5285,17 @@ packages:
     - __glibc >=2.17
   size: 132968943
   timestamp: 1782995330833
+- conda: https://conda.anaconda.org/conda-forge/linux-aarch64/rust-analyzer-2026.04.27-h069e38c_0.conda
+  sha256: 3e2dca8a27e9a6832b0ea7c85de938a917f81f960a733e154470bb35ec00e0fc
+  md5: 82e0abb45281e27cdb962283191ef724
+  depends:
+  - libgcc >=14
+  constrains:
+  - __glibc >=2.17
+  license: MIT OR Apache-2.0
+  run_exports: {}
+  size: 11024158
+  timestamp: 1777398126375
 - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sccache-0.16.0-hb434046_0.conda
   sha256: 663062481265bc7433ce3f1586b76b21fa5fffa1f5be4251696e52d467b66bfd
   md5: e76af0580d9048f8634a6ebbeb7c514a
@@ -10240,6 +10268,17 @@ packages:
     - __osx >=11.0
   size: 200225410
   timestamp: 1782995766694
+- conda: https://conda.anaconda.org/conda-forge/osx-64/rust-analyzer-2026.04.27-h19f9e61_0.conda
+  sha256: 96386cdaa0e09368000b4264e09f8e825fb497e2e7aee28bdf543d92d0758adb
+  md5: 07fb8f3710ad19b8d6c4adfc5d52dc8b
+  depends:
+  - __osx >=11.0
+  constrains:
+  - __osx >=10.13
+  license: MIT OR Apache-2.0
+  run_exports: {}
+  size: 11567252
+  timestamp: 1777398362461
 - conda: https://conda.anaconda.org/conda-forge/osx-64/sccache-0.16.0-h19f9e61_0.conda
   sha256: 4d9bea5a3c170d1b46a8238583aa27e20bd8960948a18bb74dc8acb443ffd29b
   md5: 1641871e11960a5be73c287b83d07a6b
@@ -12317,6 +12356,17 @@ packages:
   run_exports: {}
   size: 180548266
   timestamp: 1782995337539
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/rust-analyzer-2026.04.27-h6fdd925_0.conda
+  sha256: 61726acfa8bd0db24df719c7f9eaa313d820dee7069127966c5de85e9c51073c
+  md5: 5358ed78cd38f9bef5206cc0e1165f23
+  depends:
+  - __osx >=11.0
+  constrains:
+  - __osx >=11.0
+  license: MIT OR Apache-2.0
+  run_exports: {}
+  size: 10609827
+  timestamp: 1777398436955
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/sccache-0.16.0-h6fdd925_0.conda
   sha256: df206dcef612395b8ba5c485fdec4d76480e29d6c57702976ed6a6ca09b0d01f
   md5: a2ed805859a359f8c6421159a6ceb8da
@@ -14309,6 +14359,17 @@ packages:
   run_exports: {}
   size: 192571832
   timestamp: 1782998103840
+- conda: https://conda.anaconda.org/conda-forge/win-64/rust-analyzer-2026.04.27-h18a1a76_0.conda
+  sha256: fab7c94f12dbfdff1b70e9fe1bfb74c9de2f35aec3a888c6051951c6a837bef3
+  md5: 71767b79ea806e00fe66793a52c6b44a
+  depends:
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  - ucrt >=10.0.20348.0
+  license: MIT OR Apache-2.0
+  run_exports: {}
+  size: 12595130
+  timestamp: 1777398197229
 - conda: https://conda.anaconda.org/conda-forge/win-64/sccache-0.16.0-h18a1a76_0.conda
   sha256: 865d35327451f4d0b3dc154975034d15c1292249d082fffaaf94719a7669b430
   md5: 209bc2e2d4e61bdf85e4b28833ec9ec8
