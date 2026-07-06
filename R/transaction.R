@@ -22,12 +22,6 @@ NULL
 install_checked_static(Origin, "new")
 
 #' @export
-print.Origin <- function(self, ...) {
-  cat(self$to_string(), "\n", sep = "")
-  invisible(self)
-}
-
-#' @export
 `==.Origin` <- function(e1, e2) {
   e1$equal(e2)
 }

@@ -343,6 +343,10 @@ impl Origin {
         self.0.to_string()
     }
 
+    pub fn __yr_print__(&self) -> String {
+        self.0.to_string()
+    }
+
     pub fn to_bytes(&self) -> &[u8] {
         self.0.as_ref()
     }

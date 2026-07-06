@@ -30,7 +30,7 @@ throw_if_condition <- function(res) {
 #' Returns a replacement for the generated `$.<Class>` S3 method. The
 #' dispatcher looks up `name` in `env`; if it is missing but `<name>_ec`
 #' exists, the fallible binding is invoked and its result passed through
-#' [throw_if_condition()]. The wrapper is rebuilt on every call because
+#' `throw_if_condition()`. The wrapper is rebuilt on every call because
 #' the generated dispatcher injects `self` by rewriting the function's
 #' closure environment, which would clobber any captured state set up
 #' once at install time.
@@ -63,7 +63,7 @@ make_dispatcher <- function(env) {
 #' (e.g. `Origin$new(...)`), bypassing the `$.<Class>` S3 dispatcher,
 #' so they need their own bare-name alias. This installs `env[[name]]`
 #' as a wrapper that forwards to `env[[paste0(name, "_ec")]]` and runs
-#' the result through [throw_if_condition()].
+#' the result through `throw_if_condition()`.
 #'
 #' @param env Environment holding the class's generated bindings.
 #' @param name Bare (un-suffixed) name to expose. The fallible binding
