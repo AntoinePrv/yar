@@ -143,4 +143,5 @@ env.RUSTFLAGS = "-Dwarnings"
 env.CARGO_TARGET_DIR = "$PIXI_PROJECT_ROOT/target/clippy"
 
 [feature.dev.dependencies]
+rust-analyzer = "*"
 rust-src = ">=1.79.0"

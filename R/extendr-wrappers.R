@@ -83,6 +83,8 @@ Prelim$any <- function(obj) .Call(wrap__Prelim__any, obj)
 
 Prelim$inner <- function() .Call(wrap__Prelim__inner, self)
 
+Prelim$`__yr_print__` <- function() .Call(wrap__Prelim____yr_print__, self)
+
 Prelim$is_text <- function() .Call(wrap__Prelim__is_text, self)
 
 Prelim$is_array <- function() .Call(wrap__Prelim__is_array, self)

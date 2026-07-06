@@ -139,6 +139,10 @@ impl Prelim {
         self.clone().into_robj()
     }
 
+    fn __yr_print__(&self) -> Result<String, Error> {
+        Ok(format!("{:?}", self.to_in()?))
+    }
+
     pub fn is_text(&self) -> bool {
         matches!(self.as_ref(), PrelimType::Text(_))
     }
