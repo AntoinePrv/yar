@@ -57,6 +57,8 @@ Origin$greater_than_equal <- function(other) .Call(wrap__Origin__greater_than_eq
 
 Origin$to_string <- function() .Call(wrap__Origin__to_string, self)
 
+Origin$`__yr_print__` <- function() .Call(wrap__Origin____yr_print__, self)
+
 Origin$to_bytes <- function() .Call(wrap__Origin__to_bytes, self)
 
 Origin$to_hex <- function() .Call(wrap__Origin__to_hex, self)
@@ -409,6 +411,8 @@ Update$state_vector_lower <- function() .Call(wrap__Update__state_vector_lower, 
 
 Update$to_string <- function() .Call(wrap__Update__to_string, self)
 
+Update$`__yr_print__` <- function() .Call(wrap__Update____yr_print__, self)
+
 #' @export
 `$.Update` <- function (self, name) { func <- Update[[name]]; environment(func) <- environment(); func }
 
@@ -430,6 +434,8 @@ Doc$get_or_insert_map <- function(name) .Call(wrap__Doc__get_or_insert_map, self
 Doc$get_or_insert_array <- function(name) .Call(wrap__Doc__get_or_insert_array, self, name)
 
 Doc$to_string <- function() .Call(wrap__Doc__to_string, self)
+
+Doc$`__yr_print__` <- function() .Call(wrap__Doc____yr_print__, self)
 
 Doc$observe_transaction_cleanup_ec <- function(f, key) .Call(wrap__Doc__observe_transaction_cleanup_ec, self, f, key)
 

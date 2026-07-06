@@ -5,6 +5,13 @@ test_that("Update print outputs Update(...)", {
   expect_invisible(print(update))
 })
 
+test_that("Update can be formatted", {
+  update <- Update$new()
+  fmt <- format(update)
+  expect_type(fmt, "character")
+  expect_length(fmt, 1)
+})
+
 test_that("Update$new creates an empty Update", {
   update <- Update$new()
   expect_true(inherits(update, "Update"))

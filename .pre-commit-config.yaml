@@ -8,7 +8,6 @@ repos:
         args: ['--fix=lf']
       - id: check-yaml
       - id: check-json
-      - id: check-toml
       - id: check-merge-conflict
       - id: check-added-large-files
   - repo: https://github.com/python-jsonschema/check-jsonschema
@@ -23,9 +22,10 @@ repos:
       # Formatters
       - id: pixi-format-cargo
         name: "Run cargo format through pixi"
-        entry: pixi run fmt-cargo --
+        entry: pixi run fmt-cargo
         language: system
         types_or: [rust]
+        pass_filenames: false
       - id: pixi-format-air
         name: "Run air format through pixi"
         entry: pixi run fmt-air

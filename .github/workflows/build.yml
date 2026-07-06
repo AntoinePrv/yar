@@ -18,11 +18,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
+        uses: prefix-dev/setup-pixi@v0.10.0
         with:
-          pixi-version: v0.65.0
-          cache: true
+          pixi-version: v0.72.0
           environments: dev
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       - name: Run checks and formatters through pre-commit
         run: pixi run pre-commit run --all-files
 
@@ -36,11 +37,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.5
+        uses: prefix-dev/setup-pixi@v0.10.0
         with:
-          pixi-version: v0.66.0
-          cache: true
+          pixi-version: v0.72.0
           environments: dev
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       - name: Set Windows link flags for R
         if: runner.os == 'Windows'
         shell: pwsh

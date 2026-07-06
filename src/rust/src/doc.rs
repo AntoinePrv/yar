@@ -38,6 +38,10 @@ impl Doc {
         self.0.to_string()
     }
 
+    fn __yr_print__(&self) -> String {
+        self.0.to_string()
+    }
+
     pub fn observe_transaction_cleanup_ec(&self, f: Function, key: &Robj) -> Result<(), Error> {
         let result = event::observe_with!(
             self.as_ref(),

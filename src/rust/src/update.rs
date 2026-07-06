@@ -54,6 +54,10 @@ impl Update {
     pub fn to_string(&self) -> String {
         self.0.to_string()
     }
+
+    pub fn __yr_print__(&self) -> String {
+        self.0.to_string()
+    }
 }
 
 extendr_module! {
