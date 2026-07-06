@@ -24,8 +24,10 @@ print_yr <- function(x, ...) {
   ns <- asNamespace(pkgname)
   for (name in ls(ns, all.names = TRUE)) {
     obj <- get0(name, envir = ns, inherits = FALSE)
-    if (is.environment(obj) &&
-      exists(PRINT_METHOD, envir = obj, inherits = FALSE)) {
+    if (
+      is.environment(obj) &&
+        exists(PRINT_METHOD, envir = obj, inherits = FALSE)
+    ) {
       registerS3method("print", name, print_yr, envir = ns)
       registerS3method("format", name, format_yr, envir = ns)
     }
