@@ -50,8 +50,17 @@ test_that("Prelim can be inserted into a Map via Doc transaction", {
 })
 
 test_that("Prelim prints its contents", {
-  expect_match(format(Prelim$text("hello")), '^Text\\(.*Inserted\\(Any\\(String\\("hello"\\)\\)')
-  expect_match(format(Prelim$array(list(1L, 2L))), "^Array\\(ArrayPrelim\\(\\[.*Number\\(1")
-  expect_match(format(Prelim$map(list(a = 1L, b = 2L))), '^Map\\(MapPrelim\\(\\{.*"a"')
+  expect_match(
+    format(Prelim$text("hello")),
+    '^Text\\(.*Inserted\\(Any\\(String\\("hello"\\)\\)'
+  )
+  expect_match(
+    format(Prelim$array(list(1L, 2L))),
+    "^Array\\(ArrayPrelim\\(\\[.*Number\\(1"
+  )
+  expect_match(
+    format(Prelim$map(list(a = 1L, b = 2L))),
+    '^Map\\(MapPrelim\\(\\{.*"a"'
+  )
   expect_match(format(Prelim$any(42L)), "^Any\\(Number\\(42")
 })
